@@ -8,4 +8,6 @@ add_executable(proj2_2324 src/main.cpp
         src/data_structures/MutablePriorityQueue.h
         src/data_structures/UFDS.cpp
         src/GraphLoader.h
-        src/GraphLoader.cpp)
+        src/GraphLoader.cpp
+        src/Menu.h
+        src/Menu.cpp)
