@@ -67,8 +67,12 @@ void GraphLoader::loadToyGraph(const std::string& path){
             g->addEdge(v1, v2, d);
         }
     }
-
     file.close();
+}
+
+void GraphLoader::loadRealGraph(const std::string& path){
+    loadVertexReal(path + "/nodes.csv");
+    loadEdgesReal(path + "/edges.csv");
 }
 
 void GraphLoader::loadVertexReal(std::string path) {
@@ -100,6 +104,7 @@ void GraphLoader::loadVertexReal(std::string path) {
             g->findVertex(id)->setLatitude(lat);
         }
     }
+    file.close();
 }
 
 void GraphLoader::loadEdgesReal(std::string path) {
@@ -135,4 +140,5 @@ void GraphLoader::loadEdgesReal(std::string path) {
         }
         g->addEdge(source, target, d);
     }
+    file.close();
 }
