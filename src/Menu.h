@@ -16,8 +16,9 @@ class Menu {
 public:
     Menu(Graph<int>* g);
     void mainMenu();
-    void TSPBacktracking();
+    void choice1();
 
+    void TSPBacktracking(int curr, std::vector<int>& path, std::vector<int>& bestPath, double& bestDist, double currDist);
 };
 
 

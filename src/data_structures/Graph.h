@@ -135,6 +135,8 @@ public:
     int getNumVertex() const;
     std::vector<Vertex<T> *> getVertexSet() const;
 
+    Edge<T> * findEdge(const T &sourc, const T &dest) const;
+
     std:: vector<T> dfs() const;
     std:: vector<T> dfs(const T & source) const;
     void dfsVisit(Vertex<T> *v,  std::vector<T> & res) const;
@@ -490,6 +492,20 @@ bool Graph<T>::addBidirectionalEdge(const T &sourc, const T &dest, double w) {
     e1->setReverse(e2);
     e2->setReverse(e1);
     return true;
+}
+
+template <class T>
+Edge<T> * Graph<T>::findEdge(const T &sourc, const T &dest) const {
+    auto v = findVertex(sourc);
+    if (v == nullptr) {
+        return nullptr;
+    }
+    for (auto e : v->getAdj()) {
+        if (e->getDest()->getInfo() == dest) {
+            return e;
+        }
+    }
+    return nullptr;
 }
 
 /****************** DFS ********************/
