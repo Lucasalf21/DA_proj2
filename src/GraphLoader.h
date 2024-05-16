@@ -15,6 +15,7 @@ public:
     GraphLoader(Graph<int>* g);
     void loadToyGraph(const std::string& path);
     void loadRealGraph(const std::string& path);
+    void loadFullyConnectedGraph(const std::string path, std::string size);
 
     void loadVertexReal(std::string path);
     void loadEdgesReal(std::string path);

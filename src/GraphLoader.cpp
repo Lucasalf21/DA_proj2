@@ -13,6 +13,8 @@ GraphLoader::GraphLoader(Graph<int>* g) {
     this->g = g;
 }
 
+//------- Toy Graphs -------
+
 void GraphLoader::loadToyGraph(const std::string& path){
     ifstream file(path);
 
@@ -45,7 +47,7 @@ void GraphLoader::loadToyGraph(const std::string& path){
             if (g->findVertex(v2) == nullptr) {
                 g->addVertex(v2);
             }
-            g->addEdge(v1, v2, d);
+            g->addBidirectionalEdge(v1, v2, d);
         }
         else{
             string label1;
@@ -64,11 +66,46 @@ void GraphLoader::loadToyGraph(const std::string& path){
                 g->addVertex(v2);
                 g->findVertex(v2)->setLabel(label2);
             }
-            g->addEdge(v1, v2, d);
+            g->addBidirectionalEdge(v1, v2, d);
         }
     }
     file.close();
 }
+
+//------- Fully-Connected Graphs -------
+
+void GraphLoader::loadFullyConnectedGraph(const std::string path, std::string size){
+    ifstream file(path + "edges_" + size + ".csv");
+
+    if (!file.is_open()){
+        cout << "Error opening file" << endl;
+        return;
+    }
+
+    string line;
+    while (getline(file, line)){
+        stringstream ss(line);
+        int source, target;
+        double d;
+
+        getline(ss, line, ',');
+        source = stoi(line);
+        getline(ss, line, ',');
+        target = stoi(line);
+        getline(ss, line, '\r');
+        d = stod(line);
+
+        if (g->findVertex(source) == nullptr) {
+            g->addVertex(source);
+        }
+        if (g->findVertex(target) == nullptr) {
+            g->addVertex(target);
+        }
+        g->addBidirectionalEdge(source, target, d);
+    }
+}
+
+//------- Real Graphs -------
 
 void GraphLoader::loadRealGraph(const std::string& path){
     loadVertexReal(path + "/nodes.csv");

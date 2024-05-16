@@ -42,6 +42,18 @@ void loadToyGraph(Graph<int>* g, GraphLoader loader) {
     }
 }
 
+void loadFullyConnectedGraph(Graph<int>* g, GraphLoader loader) {
+    std::string size;
+    cout << "Please select how many vertices you want in the graph (25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900) or 0 to exit: ";
+    cin >> size;
+
+    if (size == "0") {
+        exit(0);
+    }
+
+    loader.loadFullyConnectedGraph("../data/Extra_Fully_Connected_Graphs/", size);
+}
+
 void loadRealGraph(Graph<int>* g, GraphLoader loader) {
     set<int> options = {0, 1, 2, 3};
     cout << "Please select which real graph you want to load:" << endl
@@ -81,7 +93,7 @@ void loadRealGraph(Graph<int>* g, GraphLoader loader) {
 int main() {
     Graph<int>* g = new Graph<int>();
     GraphLoader loader(g);
-    set<int> options = {0, 1, 2};
+    set<int> options = {0, 1, 2, 3};
 
     cout << "---------------------------------------------" << endl
          << "|               Graph Loader                |" << endl
@@ -89,7 +101,8 @@ int main() {
 
          << "Hello! Please select which graph you want to load:" << endl
          << "1 - Toy Graph" << endl
-         << "2 - Real Graph" << endl << endl
+         << "2 - Fully-Connected graphs" << endl
+         << "3 - Real Graph" << endl << endl
 
          << "0 - Exit" << endl << endl
 
@@ -110,6 +123,9 @@ int main() {
             loadToyGraph(g, loader);
             break;
         case 2:
+            loadFullyConnectedGraph(g, loader);
+            break;
+        case 3:
             loadRealGraph(g, loader);
             break;
         case 0:
@@ -117,6 +133,13 @@ int main() {
     }
 
     cout << "Graph loaded!" << endl << endl;
+
+    int edgeCount = 0;
+    for (auto v : g->getVertexSet()) {
+        for (auto e : v->getAdj()) {
+            edgeCount++;
+        }
+    }
 
     Menu menu(g);
 
