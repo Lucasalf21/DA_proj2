@@ -53,9 +53,15 @@ void Menu::mainMenu() {
 }
 
 void Menu::choice1() {
-    if (g->getVertexSet().size() > 14){
+    cout << "WARNING - This algorithm will not work with the shipping toy graph. Do you wish to continue? (y/n)" << endl;
+    char option;
+    cin >> option;
+    cout << endl;
+    if (option == 'n'){
+        return;
+    }
+    if (g->getVertexSet().size() > 11){
         cout << "This algorithm will take a REALLY long time for this graph. Do you want to continue? (y/n)" << endl;
-        char option;
         cin >> option;
         cout << endl;
         if (option == 'n'){
@@ -82,6 +88,7 @@ void Menu::choice1() {
 
 void Menu::TSPBacktracking(int curr, vector<int>& path, vector<int>& bestPath, double& bestDist, double currDist) {
     auto currVertex = g->findVertex(curr);
+    currVertex->setVisited(true);
 
     if (path.size() == g->getVertexSet().size()) {
         double totalDist = currDist + g->findEdge(curr, 0)->getWeight();
@@ -94,13 +101,16 @@ void Menu::TSPBacktracking(int curr, vector<int>& path, vector<int>& bestPath, d
 
     for (auto e : currVertex->getAdj()) {
         auto w = e->getDest();
-        if (find(path.begin(), path.end(), w->getInfo()) == path.end()) {
+        if (!w->isVisited()) {
+            w->setVisited(true);
             double newDist = currDist + e->getWeight();
             path.push_back(e->getDest()->getInfo());
             if (newDist < bestDist) {
                 TSPBacktracking(w->getInfo(), path, bestPath, bestDist, newDist);
             }
             path.pop_back();
+            w->setVisited(false);
         }
     }
 }
+

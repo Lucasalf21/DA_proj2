@@ -28,26 +28,26 @@ void GraphLoader::loadToyGraph(const std::string& path){
 
     while (getline(file, line)){
         stringstream ss(line);
-        int v1, v2;
+        int source, dest;
         double d;
 
         getline(ss, line, ',');
-        v1 = stoi(line);
+        source = stoi(line);
         getline(ss, line, ',');
-        v2 = stoi(line);
+        dest = stoi(line);
 
         if (path != "../data/Toy-Graphs/tourism.csv"){
 
             getline(ss, line, '\r');
             d = stod(line);
 
-            if (g->findVertex(v1) == nullptr) {
-                g->addVertex(v1);
+            if (g->findVertex(source) == nullptr) {
+                g->addVertex(source);
             }
-            if (g->findVertex(v2) == nullptr) {
-                g->addVertex(v2);
+            if (g->findVertex(dest) == nullptr) {
+                g->addVertex(dest);
             }
-            g->addBidirectionalEdge(v1, v2, d);
+            g->addBidirectionalEdge(source, dest, d);
         }
         else{
             string label1;
@@ -58,15 +58,15 @@ void GraphLoader::loadToyGraph(const std::string& path){
             getline(ss, label1, ',');
             getline(ss, label2, '\r');
 
-            if (g->findVertex(v1) == nullptr) {
-                g->addVertex(v1);
-                g->findVertex(v1)->setLabel(label1);
+            if (g->findVertex(source) == nullptr) {
+                g->addVertex(source);
+                g->findVertex(source)->setLabel(label1);
             }
-            if (g->findVertex(v2) == nullptr) {
-                g->addVertex(v2);
-                g->findVertex(v2)->setLabel(label2);
+            if (g->findVertex(dest) == nullptr) {
+                g->addVertex(dest);
+                g->findVertex(dest)->setLabel(label2);
             }
-            g->addBidirectionalEdge(v1, v2, d);
+            g->addBidirectionalEdge(source, dest, d);
         }
     }
     file.close();
