@@ -21,10 +21,16 @@ public:
     Menu(Graph<int>* g);
     void mainMenu();
     void choice1();
+    void choice4();
+
+    bool isGraphConnected();
+    void dfs(int v, std::unordered_set<int>& visited);
+
+    void TSPBacktracking(int curr, std::vector<int>& path, std::vector<int>& bestPath, double& bestDist, double currDist);
+    double TSPNearestNeighbor(int startNode, std::vector<int>& path);
     void choice2();
     void choice3();
 
-    void TSPBacktracking(int curr, std::vector<int>& path, std::vector<int>& bestPath, double& bestDist, double currDist);
     double triangularApproximationTSP(Graph<int>* graph);
     std::vector<Edge<int>*> primMST(Graph<int>* graph);
     void dfsMST(Vertex<int>* vertex, std::unordered_set<int>& visited, std::vector<int>& tour);

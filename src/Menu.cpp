@@ -4,6 +4,8 @@
 
 #include "Menu.h"
 #include <algorithm>
+#include <stack>
+#include <cmath>
 #include <cmath>
 #include <unordered_set>
 
@@ -28,18 +30,14 @@ void Menu::mainMenu() {
         cout << "|---------------------------------------------|" << endl
              << "|     Ocean Shipping and Urban Deliveries     |" << endl
              << "|---------------------------------------------|" << endl << endl
-
              << "1 - TSP using a backtracking approach (4.1)." << endl
              << "2 - Triangular Approximation Heuristic (4.2)." << endl
              << "3 - Other Heuristics (4.3)." << endl
              << "4 - TSP in the Real World (4.4)." << endl << endl
-
              << "0 - Exit" << endl << endl;
-
         cout << "Option: ";
         cin >> option;
         cout << endl;
-
         switch (option) {
             case 1:
                 choice1();
@@ -53,7 +51,7 @@ void Menu::mainMenu() {
                 choice3();
                 break;
             case 4:
-                // TSP in the Real World
+                choice4();
                 break;
             case 0:
                 exit(0);
@@ -74,22 +72,20 @@ void Menu::choice1() {
     char option;
     cin >> option;
     cout << endl;
-    if (option == 'n'){
+    if (option == 'n') {
         return;
     }
-    if (g->getVertexSet().size() > 11){
+    if (g->getVertexSet().size() > 11) {
         cout << "This algorithm will take a REALLY long time for this graph. Do you want to continue? (y/n)" << endl;
         cin >> option;
         cout << endl;
-        if (option == 'n'){
+        if (option == 'n') {
             return;
         }
     }
-
     vector<int> path = {0};
     vector<int> bestPath;
-    double minDist = INF;
-
+    double minDist = numeric_limits<double>::infinity();
     auto start = chrono::high_resolution_clock::now();
     TSPBacktracking(0, path, bestPath, minDist, 0);
     auto end = chrono::high_resolution_clock::now();
@@ -103,6 +99,39 @@ void Menu::choice1() {
     cout << "Distance: " << minDist << endl;
     cout << "Time: " << duration.count() << " seconds\n";
 }
+
+
+void Menu::choice4() {
+    int startNode;
+    cout << "Enter the starting node for the TSP tour: ";
+    cin >> startNode;
+    cout << endl;
+
+    unordered_set<int> visited;
+    if (!isGraphConnected()) {
+        cout << "No valid TSP tour exists as the graph is not fully connected from the start node." << endl;
+        return;
+    }
+
+    vector<int> path;
+    auto start = chrono::high_resolution_clock::now();
+    double totalDist = TSPNearestNeighbor(startNode, path);
+    auto end = chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+
+    if (totalDist == numeric_limits<double>::infinity()) {
+        cout << "No valid TSP tour exists." << endl;
+    } else {
+        cout << "Best Path: " << endl;
+        for (int i = 0; i < path.size() - 1; i++) {
+            cout << path[i] << " -> ";
+        }
+        cout << path.back() << endl;
+        cout << "Distance: " << totalDist << endl;
+        cout << "Time: " << duration.count() << " seconds" << endl << endl;
+    }
+}
+
 
 /**
  * @brief Executes the triangular approximation heuristic for TSP.
@@ -135,6 +164,94 @@ void Menu::choice3() {
 }
 
 /**
+ * @brief Checks whether the graph is fully connected.
+ *
+ * @return True if the graph is fully connected, false otherwise.
+ */
+bool Menu::isGraphConnected() {
+    unordered_set<int> visited;
+    vector<int> components;
+    for (auto v : g->getVertexSet()) {
+        if (visited.find(v.second->getInfo()) == visited.end()) {
+            dfs(v.second->getInfo(), visited);
+            components.push_back(v.second->getInfo());
+        }
+    }
+    for (int i = 0; i < components.size() - 1; i++) {
+        double weight = haversineDistance(*g->findVertex(components[i]), *g->findVertex(components[i+1]));
+        g->addEdge(components[i], components[i+1], weight);
+    }
+    return visited.size() == g->getVertexSet().size();
+}
+
+/**
+ * @brief Performs depth-first search (DFS) traversal on the graph to check for connectivity.
+ *
+ * @param v The starting vertex for DFS traversal.
+ * @param visited A set to keep track of visited vertices.
+ */
+void Menu::dfs(int v, unordered_set<int>& visited) {
+    visited.insert(v);
+    for (auto edge : g->findVertex(v)->getAdj()) {
+        int neighbor = edge.second->getDest()->getInfo();
+        if (visited.find(neighbor) == visited.end()) {
+            dfs(neighbor, visited);
+        }
+    }
+}
+
+/**
+ * @brief Finds the best TSP tour starting from a specified node using the nearest neighbor heuristic.
+ *
+ * @param startNode The starting node for the TSP tour.
+ * @param path[out] The vector to store the TSP tour path.
+ * @return The total distance of the TSP tour.
+ */
+double Menu::TSPNearestNeighbor(int startNode, vector<int>& path) {
+    unordered_set<int> visited;
+    std::stack<int> pathStack;
+    int currentNode = startNode;
+    double totalDist = 0;
+    path.push_back(currentNode);
+    pathStack.push(currentNode);
+    visited.insert(currentNode);
+
+    while (!pathStack.empty()) {
+        currentNode = pathStack.top();
+        auto currVertex = g->findVertex(currentNode);
+        double minDist = numeric_limits<double>::infinity();
+        int nextNode = -1;
+
+        for (auto e : currVertex->getAdj()) {
+            int neighbor = e.second->getDest()->getInfo();
+            if (visited.find(neighbor) == visited.end() && e.second->getWeight() < minDist) {
+                minDist = e.second->getWeight();
+                nextNode = neighbor;
+            }
+        }
+
+        if (nextNode == -1) {
+            pathStack.pop();
+        } else {
+            currentNode = nextNode;
+            pathStack.push(currentNode);
+            path.push_back(currentNode);
+            visited.insert(currentNode);
+            totalDist += minDist;
+        }
+    }
+
+    auto lastEdge = g->findEdge(currentNode, startNode);
+    if (lastEdge != nullptr) {
+        totalDist += lastEdge->getWeight();
+    } else {
+        path.pop_back();
+    }
+
+    return totalDist;
+}
+
+/**
  * @brief Recursive function for backtracking TSP.
  *
  * @param curr The current vertex.
@@ -145,32 +262,31 @@ void Menu::choice3() {
  *
  * Time Complexity: O(n!), where n is the number of vertices.
  */
+
 void Menu::TSPBacktracking(int curr, vector<int>& path, vector<int>& bestPath, double& bestDist, double currDist) {
     auto currVertex = g->findVertex(curr);
     currVertex->setVisited(true);
-
     if (path.size() == g->getVertexSet().size()) {
-        double totalDist = currDist + g->findEdge(curr, 0)->getWeight();
+        double totalDist = currDist + g->findEdge(curr, path[0])->getWeight();
         if (totalDist < bestDist) {
             bestDist = totalDist;
             bestPath = path;
         }
+        currVertex->setVisited(false);
         return;
     }
-
     for (auto e : currVertex->getAdj()) {
-        auto w = e->getDest();
+        auto w = e.second->getDest();
         if (!w->isVisited()) {
-            w->setVisited(true);
-            double newDist = currDist + e->getWeight();
-            path.push_back(e->getDest()->getInfo());
+            double newDist = currDist + e.second->getWeight();
             if (newDist < bestDist) {
+                path.push_back(w->getInfo());
                 TSPBacktracking(w->getInfo(), path, bestPath, bestDist, newDist);
+                path.pop_back();
             }
-            path.pop_back();
-            w->setVisited(false);
         }
     }
+    currVertex->setVisited(false);
 }
 
 /**
@@ -185,30 +301,27 @@ double Menu::triangularApproximationTSP(Graph<int>* graph) {
     std::vector<Edge<int>*> mstEdges = primMST(graph);
     std::unordered_set<int> visited;
     std::vector<int> tour;
-    bool isRealGraph = graph->getVertexSet().front()->getLongitude() != 0;
+    bool isRealGraph = graph->getVertexSet().begin()->second->getLongitude() != 0;
     bool found = false;
 
-    // Reconstruct the graph with MST edges only
     Graph<int> mstGraph;
     for (auto vertex : graph->getVertexSet()) {
-        mstGraph.addVertex(vertex->getInfo());
+        mstGraph.addVertex(vertex.second->getInfo());
     }
     for (auto edge : mstEdges) {
         mstGraph.addEdge(edge->getOrig()->getInfo(), edge->getDest()->getInfo(), edge->getWeight());
         mstGraph.addEdge(edge->getDest()->getInfo(), edge->getOrig()->getInfo(), edge->getWeight());
     }
 
-    // Perform DFS on the MST to get the TSP tour
     dfsMST(mstGraph.findVertex(0), visited, tour);
 
-    // Calculate the total distance of the tour
     double totalDistance = 0.0;
     for (size_t i = 0; i < tour.size() - 1; ++i) {
         Vertex<int>* u = graph->findVertex(tour[i]);
         Vertex<int>* v = graph->findVertex(tour[i + 1]);
         for (auto e : u->getAdj()) {
-            if (e->getDest() == v) {
-                totalDistance += e->getWeight();
+            if (e.second->getDest() == v) {
+                totalDistance += e.second->getWeight();
                 found = true;
                 break;
             }
@@ -220,8 +333,8 @@ double Menu::triangularApproximationTSP(Graph<int>* graph) {
     }
 
     for (auto e : graph->findVertex(tour.back())->getAdj()) {
-        if (e->getDest() == graph->findVertex(tour.front())) {
-            totalDistance += e->getWeight();
+        if (e.second->getDest() == graph->findVertex(tour.front())) {
+            totalDistance += e.second->getWeight();
             found = true;
         }
     }
@@ -246,11 +359,11 @@ void Menu::dfsMST(Vertex<int>* vertex, std::unordered_set<int>& visited, std::ve
     visited.insert(vertex->getInfo());
     tour.push_back(vertex->getInfo());
 
-    for (Edge<int>* edge : vertex->getAdj()) {
-        Vertex<int>* dest = edge->getDest();
+    for (auto edge : vertex->getAdj()) {
+        Vertex<int>* dest = edge.second->getDest();
         if (visited.find(dest->getInfo()) == visited.end()) {
             dfsMST(dest, visited, tour);
-            tour.push_back(vertex->getInfo()); // Return to the current vertex
+            tour.push_back(vertex->getInfo());
         }
     }
 }
@@ -269,29 +382,37 @@ std::vector<Edge<int>*> Menu::primMST(Graph<int>* graph) {
     MutablePriorityQueue<Vertex<int>> pq;
 
     auto vertices = graph->getVertexSet();
-    vertices.front()->setDist(0);
-    pq.insert(vertices.front());
+
+    for (auto vertex : vertices) {
+        vertex.second->setDist(std::numeric_limits<double>::infinity());
+        vertex.second->setPath(nullptr);
+    }
+
+    Vertex<int>* startVertex = vertices[0];
+    startVertex->setDist(0);
+    pq.insert(startVertex);
 
     while (!pq.empty()) {
         Vertex<int>* u = pq.extractMin();
         if (inMST.find(u->getInfo()) != inMST.end()) continue;
         inMST.insert(u->getInfo());
 
-        for (Edge<int>* edge : u->getAdj()) {
-            Vertex<int>* v = edge->getDest();
-            double weight = edge->getWeight();
+        for (auto edge : u->getAdj()) {
+            Vertex<int>* v = edge.second->getDest();
+            double weight = edge.second->getWeight();
 
             if (inMST.find(v->getInfo()) == inMST.end() && weight < v->getDist()) {
                 v->setDist(weight);
-                v->setPath(edge);
+                v->setPath(edge.second);
                 pq.insert(v);
             }
         }
     }
 
-    for (Vertex<int>* vertex : vertices) {
-        if (vertex->getPath() != nullptr) {
-            mstEdges.push_back(vertex->getPath());
+    // Collect MST edges
+    for (auto vertex : vertices) {
+        if (vertex.second->getPath() != nullptr) {
+            mstEdges.push_back(vertex.second->getPath());
         }
     }
 
@@ -311,7 +432,7 @@ double Menu::nearestNeighborTSP(Graph<int>* graph) {
     std::vector<bool> visited(graph->getNumVertex(), false);
     int current = 0;
     visited[current] = true;
-    bool isRealGraph = graph->getVertexSet().front()->getLongitude() != 0;
+    bool isRealGraph = graph->getVertexSet().begin()->second->getLongitude() != 0;
     bool found = false;
 
     for (size_t i = 1; i < graph->getNumVertex(); ++i) {
@@ -324,8 +445,8 @@ double Menu::nearestNeighborTSP(Graph<int>* graph) {
     }
 
     for (auto e : graph->findVertex(current)->getAdj()) {
-        if (e->getDest() == graph->findVertex(0)) {
-            totalDistance += e->getWeight();
+        if (e.second->getDest() == graph->findVertex(0)) {
+            totalDistance += e.second->getWeight();
             found = true;
             break;
         }
@@ -357,24 +478,24 @@ int Menu::nearestNeighbor(const Graph<int>* graph, const std::vector<bool>& visi
     bool found = false;
     Vertex<int>* currentVertex = graph->findVertex(current);
 
-    for (Vertex<int>* vertex : graph->getVertexSet()) {
-        if (!visited[vertex->getInfo()]) {
+    for (auto vertex : graph->getVertexSet()) {
+        if (!visited[vertex.second->getInfo()]) {
             double distance;
             for (auto e : currentVertex->getAdj()) {
-                if (e->getDest() == vertex) {
-                    distance = e->getWeight();
+                if (e.second->getDest() == vertex.second) {
+                    distance = e.second->getWeight();
                     found = true;
                     break;
                 }
             }
             if (isRealGraph && !found) {
-                distance = haversineDistance(*currentVertex, *vertex);
+                distance = haversineDistance(*currentVertex, *vertex.second);
                 found = false;
             }
 
             if (distance < minDistance) {
                 minDistance = distance;
-                nearest = vertex->getInfo();
+                nearest = vertex.second->getInfo();
             }
         }
     }
