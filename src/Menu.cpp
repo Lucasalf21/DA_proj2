@@ -314,7 +314,6 @@ int Menu::nearestNeighbor(const Graph<int>* graph, const std::vector<bool>& visi
 }
 
 double Menu::haversineDistance(const Vertex<int>& node1, const Vertex<int>& node2) {
-    std::cout << "haversine!!!" << std::endl;
     const double R = 6371; // Earth radius in kilometers
     double lat1 = node1.getLatitude() * M_PI / 180.0;
     double lon1 = node1.getLongitude() * M_PI / 180.0;
