@@ -9,11 +9,19 @@
 
 using namespace std;
 
+/**
+ * @brief Constructs a new Menu object.
+ *
+ * @param g Pointer to the graph.
+ */
 Menu::Menu(Graph<int>* g) {
     this->g = g;
     mainMenu();
 }
 
+/**
+ * @brief Displays the main menu and handles user input.
+ */
 void Menu::mainMenu() {
     int option;
     while (true) {
@@ -56,6 +64,11 @@ void Menu::mainMenu() {
     }
 }
 
+/**
+ * @brief Executes the backtracking approach for TSP.
+ *
+ * Time Complexity: O(n!), where n is the number of vertices.
+ */
 void Menu::choice1() {
     cout << "WARNING - This algorithm will not work with the shipping toy graph. Do you wish to continue? (y/n)" << endl;
     char option;
@@ -91,6 +104,11 @@ void Menu::choice1() {
     cout << "Time: " << duration.count() << " seconds\n";
 }
 
+/**
+ * @brief Executes the triangular approximation heuristic for TSP.
+ *
+ * Time Complexity: O(n^2), where n is the number of vertices.
+ */
 void Menu::choice2(){
     auto start = std::chrono::high_resolution_clock::now();
     double totalDistance = triangularApproximationTSP(this->g);
@@ -101,6 +119,11 @@ void Menu::choice2(){
     std::cout << "Time: " << duration.count() << " seconds\n";
 }
 
+/**
+ * @brief Executes the nearest neighbor heuristic for TSP.
+ *
+ * Time Complexity: O(n^2), where n is the number of vertices.
+ */
 void Menu::choice3() {
     auto start = std::chrono::high_resolution_clock::now();
     double totalDistance = nearestNeighborTSP(this->g);
@@ -111,8 +134,17 @@ void Menu::choice3() {
     std::cout << "Time: " << duration.count() << " seconds\n";
 }
 
-
-
+/**
+ * @brief Recursive function for backtracking TSP.
+ *
+ * @param curr The current vertex.
+ * @param path The current path.
+ * @param bestPath The best path found.
+ * @param bestDist The best distance found.
+ * @param currDist The current distance.
+ *
+ * Time Complexity: O(n!), where n is the number of vertices.
+ */
 void Menu::TSPBacktracking(int curr, vector<int>& path, vector<int>& bestPath, double& bestDist, double currDist) {
     auto currVertex = g->findVertex(curr);
     currVertex->setVisited(true);
@@ -141,6 +173,14 @@ void Menu::TSPBacktracking(int curr, vector<int>& path, vector<int>& bestPath, d
     }
 }
 
+/**
+ * @brief Executes the triangular approximation heuristic for TSP.
+ *
+ * @param graph Pointer to the graph.
+ * @return The total distance of the tour.
+ *
+ * Time Complexity: O(n^2), where n is the number of vertices.
+ */
 double Menu::triangularApproximationTSP(Graph<int>* graph) {
     std::vector<Edge<int>*> mstEdges = primMST(graph);
     std::unordered_set<int> visited;
@@ -193,6 +233,15 @@ double Menu::triangularApproximationTSP(Graph<int>* graph) {
     return totalDistance;
 }
 
+/**
+ * @brief Depth-first search on the MST to get the TSP tour.
+ *
+ * @param vertex The current vertex.
+ * @param visited Set of visited vertices.
+ * @param tour The TSP tour.
+ *
+ * Time Complexity: O(n), where n is the number of vertices.
+ */
 void Menu::dfsMST(Vertex<int>* vertex, std::unordered_set<int>& visited, std::vector<int>& tour) {
     visited.insert(vertex->getInfo());
     tour.push_back(vertex->getInfo());
@@ -206,20 +255,22 @@ void Menu::dfsMST(Vertex<int>* vertex, std::unordered_set<int>& visited, std::ve
     }
 }
 
+/**
+ * @brief Computes the minimum spanning tree using Prim's algorithm.
+ *
+ * @param graph Pointer to the graph.
+ * @return A vector of edges in the MST.
+ *
+ * Time Complexity: O(n^2), where n is the number of vertices.
+ */
 std::vector<Edge<int>*> Menu::primMST(Graph<int>* graph) {
     std::vector<Edge<int>*> mstEdges;
     std::unordered_set<int> inMST;
     MutablePriorityQueue<Vertex<int>> pq;
+
     auto vertices = graph->getVertexSet();
-
-    for (Vertex<int>* vertex : vertices) {
-        vertex->setDist(std::numeric_limits<double>::infinity());
-        vertex->setPath(nullptr);
-    }
-
-    Vertex<int>* startVertex = vertices[0]; // Starting from vertex 0
-    startVertex->setDist(0);
-    pq.insert(startVertex);
+    vertices.front()->setDist(0);
+    pq.insert(vertices.front());
 
     while (!pq.empty()) {
         Vertex<int>* u = pq.extractMin();
@@ -247,28 +298,33 @@ std::vector<Edge<int>*> Menu::primMST(Graph<int>* graph) {
     return mstEdges;
 }
 
+/**
+ * @brief Executes the nearest neighbor heuristic for TSP.
+ *
+ * @param graph Pointer to the graph.
+ * @return The total distance of the tour.
+ *
+ * Time Complexity: O(n^2), where n is the number of vertices.
+ */
 double Menu::nearestNeighborTSP(Graph<int>* graph) {
     double totalDistance = 0.0;
     std::vector<bool> visited(graph->getNumVertex(), false);
     int current = 0;
     visited[current] = true;
-    bool isreal = false;
+    bool isRealGraph = graph->getVertexSet().front()->getLongitude() != 0;
     bool found = false;
-    if(graph->getVertexSet().front()->getLongitude() != 0){
-        isreal = true;
-    }
 
     for (size_t i = 1; i < graph->getNumVertex(); ++i) {
         double minDistance;
-        int next = nearestNeighbor(graph, visited, current, minDistance, isreal);
+        int next = nearestNeighbor(graph, visited, current, minDistance, isRealGraph);
         if (next == -1) break;
         totalDistance += minDistance;
         visited[next] = true;
         current = next;
     }
 
-    for(auto e: graph->findVertex(current)->getAdj()){
-        if(e->getDest() == graph->findVertex(0)){
+    for (auto e : graph->findVertex(current)->getAdj()) {
+        if (e->getDest() == graph->findVertex(0)) {
             totalDistance += e->getWeight();
             found = true;
             break;
@@ -276,14 +332,26 @@ double Menu::nearestNeighborTSP(Graph<int>* graph) {
     }
 
     // Return to the starting node
-    if(isreal && !found){
+    if (isRealGraph && !found) {
         totalDistance += haversineDistance(*graph->findVertex(current), *graph->findVertex(0));
     }
 
     return totalDistance;
 }
 
-int Menu::nearestNeighbor(const Graph<int>* graph, const std::vector<bool>& visited, int current, double& minDistance, bool isreal) {
+/**
+ * @brief Finds the nearest neighbor for the nearest neighbor TSP heuristic.
+ *
+ * @param graph Pointer to the graph.
+ * @param visited Vector of visited vertices.
+ * @param current The current vertex.
+ * @param minDistance The minimum distance to the next vertex.
+ * @param isRealGraph Indicates if the graph has real-world coordinates.
+ * @return The index of the nearest neighbor.
+ *
+ * Time Complexity: O(n), where n is the number of vertices.
+ */
+int Menu::nearestNeighbor(const Graph<int>* graph, const std::vector<bool>& visited, int current, double& minDistance, bool isRealGraph) {
     minDistance = std::numeric_limits<double>::max();
     int nearest = -1;
     bool found = false;
@@ -292,14 +360,14 @@ int Menu::nearestNeighbor(const Graph<int>* graph, const std::vector<bool>& visi
     for (Vertex<int>* vertex : graph->getVertexSet()) {
         if (!visited[vertex->getInfo()]) {
             double distance;
-            for(auto e : currentVertex->getAdj()){
-                if(e->getDest() == vertex){
+            for (auto e : currentVertex->getAdj()) {
+                if (e->getDest() == vertex) {
                     distance = e->getWeight();
                     found = true;
                     break;
                 }
             }
-            if(isreal && !found){
+            if (isRealGraph && !found) {
                 distance = haversineDistance(*currentVertex, *vertex);
                 found = false;
             }
@@ -313,6 +381,15 @@ int Menu::nearestNeighbor(const Graph<int>* graph, const std::vector<bool>& visi
     return nearest;
 }
 
+/**
+ * @brief Calculates the Haversine distance between two vertices.
+ *
+ * @param node1 The first vertex.
+ * @param node2 The second vertex.
+ * @return The Haversine distance.
+ *
+ * Time Complexity: O(1)
+ */
 double Menu::haversineDistance(const Vertex<int>& node1, const Vertex<int>& node2) {
     const double R = 6371; // Earth radius in kilometers
     double lat1 = node1.getLatitude() * M_PI / 180.0;
@@ -326,4 +403,3 @@ double Menu::haversineDistance(const Vertex<int>& node1, const Vertex<int>& node
     double c = 2 * atan2(sqrt(a), sqrt(1 - a));
     return R * c;
 }
-

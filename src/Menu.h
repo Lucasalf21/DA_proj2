@@ -10,9 +10,12 @@
 #include <unordered_set>
 #include "data_structures/Graph.h"
 #include "GraphLoader.h"
-
+/**
+ * @class Menu
+ * @brief This class provides various methods to solve the Traveling Salesman Problem (TSP) using different approaches.
+ */
 class Menu {
-    Graph<int>* g;
+    Graph<int>* g;///< Pointer to the graph.
 
 public:
     Menu(Graph<int>* g);

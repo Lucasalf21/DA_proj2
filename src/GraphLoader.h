@@ -7,9 +7,12 @@
 
 #include "data_structures/Graph.h"
 
+/**
+ * @brief Class responsible for loading graphs from files.
+ */
 class GraphLoader {
 private:
-    Graph<int>* g;
+    Graph<int>* g; /**< Pointer to the graph where the data will be loaded. */
 
 public:
     GraphLoader(Graph<int>* g);
