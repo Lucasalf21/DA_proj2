@@ -10,4 +10,5 @@ add_executable(proj2_2324 src/main.cpp
         src/GraphLoader.h
         src/GraphLoader.cpp
         src/Menu.h
-        src/Menu.cpp)
+        src/Menu.cpp
+)

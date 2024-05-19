@@ -135,7 +135,9 @@ int main() {
     cout << "Graph loaded!" << endl << endl;
 
     int edgeCount = 0;
-    for (auto v : g->getVertexSet()) {
+    auto vertexSet = g->getVertexSet();
+    for (auto &pair : vertexSet) {
+        Vertex<int> *v = pair.second;
         for (auto e : v->getAdj()) {
             edgeCount++;
         }

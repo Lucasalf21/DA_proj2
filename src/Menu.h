@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <chrono>
+#include <unordered_set>
 #include "data_structures/Graph.h"
 #include "GraphLoader.h"
 
@@ -17,8 +18,13 @@ public:
     Menu(Graph<int>* g);
     void mainMenu();
     void choice1();
+    void choice4();
+
+    bool isGraphConnected();
+    void dfs(int v, std::unordered_set<int>& visited);
 
     void TSPBacktracking(int curr, std::vector<int>& path, std::vector<int>& bestPath, double& bestDist, double currDist);
+    double TSPNearestNeighbor(int startNode, std::vector<int>& path);
 };
 
 

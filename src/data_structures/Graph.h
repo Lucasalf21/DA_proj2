@@ -6,6 +6,7 @@
 
 
 #include <iostream>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <queue>
@@ -28,7 +29,7 @@ public:
     bool operator<(Vertex<T> & vertex) const; // // required by MutablePriorityQueue
 
     T getInfo() const;
-    std::vector<Edge<T> *> getAdj() const;
+    std::unordered_map<T, Edge<T> *> getAdj() const;
     double getLatitude() const;
     double getLongitude() const;
     std::string getLabel() const;
@@ -55,7 +56,7 @@ public:
     friend class MutablePriorityQueue<Vertex>;
 protected:
     T info;                // info node
-    std::vector<Edge<T> *> adj;  // outgoing edges
+    std::unordered_map<T, Edge<T> *> adj;  // outgoing edges
     double latitude;
     double longitude;
     std::string label;
@@ -68,7 +69,7 @@ protected:
     double dist = 0;
     Edge<T> *path = nullptr;
 
-    std::vector<Edge<T> *> incoming; // incoming edges
+    std::unordered_map<T, Edge<T> *> incoming; // incoming edges
 
     int queueIndex = 0; 		// required by MutablePriorityQueue and UFDS
 
@@ -133,7 +134,7 @@ public:
     bool addBidirectionalEdge(const T &sourc, const T &dest, double w);
 
     int getNumVertex() const;
-    std::vector<Vertex<T> *> getVertexSet() const;
+    std::unordered_map<T, Vertex<T> *> getVertexSet() const;
 
     Edge<T> * findEdge(const T &sourc, const T &dest) const;
 
@@ -146,7 +147,7 @@ public:
     bool dfsIsDAG(Vertex<T> *v) const;
     std::vector<T> topsort() const;
 protected:
-    std::vector<Vertex<T> *> vertexSet;    // vertex set
+    std::unordered_map<T, Vertex<T> *> vertexSet;    // vertex set
 
     double ** distMatrix = nullptr;   // dist matrix for Floyd-Warshall
     int **pathMatrix = nullptr;   // path matrix for Floyd-Warshall
@@ -154,7 +155,7 @@ protected:
     /*
      * Finds the index of the vertex with a given content.
      */
-    int findVertexIdx(const T &in) const;
+    //int findVertexIdx(const T &in) const;
 };
 
 void deleteMatrix(int **m, int n);
@@ -172,8 +173,8 @@ Vertex<T>::Vertex(T in, double lat, double lon, std::string lab): info(in), lati
 template <class T>
 Edge<T> * Vertex<T>::addEdge(Vertex<T> *d, double w) {
     auto newEdge = new Edge<T>(this, d, w);
-    adj.push_back(newEdge);
-    d->incoming.push_back(newEdge);
+    adj[d->getInfo()] = newEdge;
+    d->incoming[this->getInfo()] = newEdge;
     return newEdge;
 }
 
@@ -184,21 +185,18 @@ Edge<T> * Vertex<T>::addEdge(Vertex<T> *d, double w) {
  */
 template <class T>
 bool Vertex<T>::removeEdge(T in) {
-    bool removedEdge = false;
-    auto it = adj.begin();
-    while (it != adj.end()) {
-        Edge<T> *edge = *it;
-        Vertex<T> *dest = edge->getDest();
-        if (dest->getInfo() == in) {
-            it = adj.erase(it);
-            deleteEdge(edge);
-            removedEdge = true; // allows for multiple edges to connect the same pair of vertices (multigraph)
-        }
-        else {
-            it++;
-        }
+    auto it = adj.find(in);
+    if (it == adj.end())
+        return false;
+    delete it->second;
+    adj.erase(it);
+
+    it = it->second->getDest()->incoming.find(this->getInfo());
+    if (it != it->second->getDest()->incoming.end()) {
+        it->second->getDest()->incoming.erase(it);
     }
-    return removedEdge;
+
+    return true;
 }
 
 /*
@@ -225,7 +223,7 @@ T Vertex<T>::getInfo() const {
 }
 
 template <class T>
-std::vector<Edge<T>*> Vertex<T>::getAdj() const {
+std::unordered_map<T, Edge<T>*> Vertex<T>::getAdj() const {
     return this->adj;
 }
 
@@ -393,7 +391,7 @@ int Graph<T>::getNumVertex() const {
 }
 
 template <class T>
-std::vector<Vertex<T> *> Graph<T>::getVertexSet() const {
+std::unordered_map<T, Vertex<T> *> Graph<T>::getVertexSet() const {
     return vertexSet;
 }
 
@@ -401,32 +399,32 @@ std::vector<Vertex<T> *> Graph<T>::getVertexSet() const {
  * Auxiliary function to find a vertex with a given content.
  */
 template <class T>
-Vertex<T> * Graph<T>::findVertex(const T &in) const {
-    for (auto v : vertexSet)
-        if (v->getInfo() == in)
-            return v;
+Vertex<T>* Graph<T>::findVertex(const T &in) const {
+    auto it = vertexSet.find(in);
+    if (it != vertexSet.end())
+        return it->second;
     return nullptr;
 }
 
 /*
  * Finds the index of the vertex with a given content.
  */
-template <class T>
-int Graph<T>::findVertexIdx(const T &in) const {
-    for (unsigned i = 0; i < vertexSet.size(); i++)
-        if (vertexSet[i]->getInfo() == in)
-            return i;
-    return -1;
-}
+//template <class T>
+//int Graph<T>::findVertexIdx(const T &in) const {
+//    for (unsigned i = 0; i < vertexSet.size(); i++)
+//        if (vertexSet[i]->getInfo() == in)
+//            return i;
+//    return -1;
+//}
 /*
  *  Adds a vertex with a given content or info (in) to a graph (this).
  *  Returns true if successful, and false if a vertex with that content already exists.
  */
 template <class T>
 bool Graph<T>::addVertex(const T &in) {
-    if (findVertex(in) != nullptr)
+    if (vertexSet.find(in) != vertexSet.end())
         return false;
-    vertexSet.push_back(new Vertex<T>(in));
+    vertexSet[in] = new Vertex<T>(in);
     return true;
 }
 
@@ -437,19 +435,17 @@ bool Graph<T>::addVertex(const T &in) {
  */
 template <class T>
 bool Graph<T>::removeVertex(const T &in) {
-    for (auto it = vertexSet.begin(); it != vertexSet.end(); it++) {
-        if ((*it)->getInfo() == in) {
-            auto v = *it;
-            v->removeOutgoingEdges();
-            for (auto u : vertexSet) {
-                u->removeEdge(v->getInfo());
-            }
-            vertexSet.erase(it);
-            delete v;
-            return true;
-        }
+    auto it = vertexSet.find(in);
+    if (it == vertexSet.end())
+        return false;
+    Vertex<T> *v = it->second;
+    v->removeOutgoingEdges();
+    for (auto &pair: vertexSet) {
+        pair.second->removeEdge(v->getInfo());
     }
-    return false;
+    delete v;
+    vertexSet.erase(it);
+    return true;
 }
 
 /*
@@ -500,9 +496,9 @@ Edge<T> * Graph<T>::findEdge(const T &sourc, const T &dest) const {
     if (v == nullptr) {
         return nullptr;
     }
-    for (auto e : v->getAdj()) {
-        if (e->getDest()->getInfo() == dest) {
-            return e;
+    for (auto & e : v->getAdj()) {
+        if (e.second->getDest()->getInfo() == dest) {
+            return e.second;
         }
     }
     return nullptr;
